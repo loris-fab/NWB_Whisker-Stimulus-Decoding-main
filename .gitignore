@@ -1,0 +1,8 @@
+# Data Files
+*.mat
+*.npz
+*.pkl
+*.pdf
+NWB_files/
+# Jupyter Notebook
+*.ipynb
