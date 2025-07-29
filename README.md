@@ -1,19 +1,55 @@
-![Static Badge](https://img.shields.io/badge/In%20Progress%20-%20orange)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-# Project Topic
-In this project, we aim to infer how the perception of whisker stimuli evolves in mice during an operant conditioning task.
 
-Since perception is a latent variable, we estimate it by combining stimulus decoding from barrel cortex spiking activity with mice licking behavior. We then adjust the decoder parameters to capture behavioral patterns, thereby bringing the decoded representation closer to the underlying perceptual process.
+# Template Matching GUI – Adapted for NWB Files
 
-For more information please refer to the abstract presentation included in the repository.
+**Study:** Oryshchuk et al., 2024, *Cell Reports*
 
-Semester project in Labratory of Sensory Processing, EPFL 
+This project is an extension of an EPFL semester project focused on decoding perception of whisker stimuli in mice during an operant conditioning task.
 
-Data from [Oryshchuk et al.](https://zenodo.org/records/10115924)
+I adapted the original project to support **NWB-formatted data** from the publication *Oryshchuk et al., 2024*, and extended the GUI for more detailed and interactive **PSTH (Peri-Stimulus Time Histogram)** visualization.
 
-# Demo
-This repo provides an intuative GUI to run the analysis and visualize the results:
+## 📚 Reference
 
-# Installation
-First [install conda/miniconda](https://www.anaconda.com/docs/getting-started/miniconda/install). To access the GUI, create a conda env based on `environment.yml` file (using `conda env create -f environment.yml`). Then activate this env in terminal (`conda activate smm`) and launce the gradio app by executing `python -m src.app` and viewing the provided web address in browser.
+Oryshchuk et al., *Distributed and specific encoding of sensory, motor, and decision information in the mouse neocortex during goal-directed behavior*, Cell Reports, 2024.  
+👉 [DOI](https://doi.org/10.1016/j.celrep.2023.113618)
+
+
+## ⚙️ Features
+
+* **Support for NWB files**
+* **Interactive GUI via Gradio for Dual analysis tabs: WR(+) and WR(–) trials**
+* PSTH visualization aligned to trial onset, jaw movement... / Custom filters: stimulus amplitudes, neuron types, brain regions, quality metrics (RPV, ISI, ISO)
+* Decoder parameter tuning and behavioral alignment
+* Continuous perception estimation over time
+
+
+## 🚀 Usage
+
+Create environment :
+```bash
+conda create -n smm python=3.9
+conda activate smm
+```
+
+Install dependencies with:
+```bash
+pip install -r requirement.txt
+```
+
+Download NWB files from the **LSENS Laboratory of Sensory Processing**, and put them inside the folder:
+
+```
+./NWB_files
+```
+
+## 🧩 How to use
+
+```bash
+python -m src.app
+```
+
+Then open the local URL provided in your browser.
+
+
+
+
