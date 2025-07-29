@@ -50,6 +50,11 @@ python -m src.app
 
 Then open the local URL provided in your browser.
 
+## ✍️ Author
 
+The original codebase was created by **Sobhan Nili**, and has been adapted for this project by @loris-fab.
 
+For questions related to this adaptation, you can contact: loris.fabbro@epfl.ch
+
+---
 
