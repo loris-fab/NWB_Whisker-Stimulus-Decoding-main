@@ -270,13 +270,35 @@ def plot_custom_psth(
       * lick_timestamps: aligns on transitions (onsets or offsets) of lick_indices.
     """
 
-    s = int(session_idx)
+    
+    if (not stim_amp or not result) and align_event == "trial_onset":
+        fig = plt.figure()
+        plt.text(0.5, 0.5, "Select at least one option for each alignment event.", ha='center', va='center')
+        plt.axis('off')
+        plt.close()
+        return fig
+    
 
-    # --- Raccourcis vers la session ---
+    if len(brain_region) == 0 or len(ccf_acronym) == 0 or len(neuron_type) == 0:
+        fig = plt.figure()
+        plt.text(0.5, 0.5, "Select at least one option for each filter.", ha='center', va='center')
+        plt.axis('off')
+        plt.close()
+        return fig
+    
+    if len(use_lick_index) == 0 and align_event == "lick_timestamps":
+        fig = plt.figure()
+        plt.text(0.5, 0.5, "Select at least one option for lick index.", ha='center', va='center')
+        plt.axis('off')
+        plt.close()
+        return fig
+    
+
+
+    s = int(session_idx)
     trials = data_struct['trials'][s]
 
-    # --- Récupère les tableaux unités (mêmes longueurs) ---
-    # Convertis en np.array pour masques logiques
+    # --- Recuperation of trials metadata ---
     rpv = np.asarray(trials.get('fractionRPVs_estimatedTauR', []), dtype=float)
     isi = np.asarray(trials.get('isi_violation', []), dtype=float)
     iso = np.asarray(trials.get('iso_distance', []), dtype=float)
@@ -290,12 +312,12 @@ def plot_custom_psth(
 
     if n_units == 0:
         fig = plt.figure()
-        plt.text(0.5, 0.5, "Aucun neurone dans cette session.", ha='center', va='center')
+        plt.text(0.5, 0.5, "No neurons found in this session.", ha='center', va='center')
         plt.axis('off')
         plt.close()
         return fig
 
-    # --- Masque neurones (RPV ≤, ISI ≤, ISO ≥, appartenance aux groupes cochés) ---
+    # --- Neuron mask (RPV ≤, ISI ≤, ISO ≥, belonging to checked groups) ---
     unit_mask = np.ones(n_units, dtype=bool)
 
     if rpv.size == n_units:
@@ -314,16 +336,16 @@ def plot_custom_psth(
     if isinstance(neuron_type, list) and len(neuron_type) > 0 and typ.size == n_units:
         unit_mask &= np.isin(typ, neuron_type)
 
-    # --- Neurones retenus ---
+    # --- Neurons retained ---
     kept_spikes = spikes_list[unit_mask]
     if len(kept_spikes) == 0:
         fig = plt.figure()
-        plt.text(0.5, 0.5, "Filtres trop stricts : 0 neurone retenu.", ha='center', va='center')
+        plt.text(0.5, 0.5, "No neurons retained after filtering.", ha='center', va='center')
         plt.axis('off')
         plt.close()
         return fig
 
-    # --- Sélection des évènements d’alignement ---
+    # --- Selection of alignment events ---
     # Conversion ms -> s
     TB = (float(time_bound[0]) / 1000.0, float(time_bound[1]) / 1000.0)
     BIN = float(bin_size) / 1000.0
@@ -345,7 +367,7 @@ def plot_custom_psth(
         trial_onsets = _safe_get_top_level('trial_onset')
         if trial_onsets is None:
             fig = plt.figure()
-            plt.text(0.5, 0.5, "Aucun 'trial_onset' disponible.", ha='center', va='center')
+            plt.text(0.5, 0.5, "No 'trial_onset' available.", ha='center', va='center')
             plt.axis('off')
             plt.close()
             return fig
@@ -355,10 +377,11 @@ def plot_custom_psth(
 
         if stim_amp_arr.size == 0 or result_arr.size == 0:
             fig = plt.figure()
-            plt.text(0.5, 0.5, "Métadonnées de trials manquantes (stim_amp/result).", ha='center', va='center')
+            plt.text(0.5, 0.5, "Trial metadata missing (stim_amp/result).", ha='center', va='center')
             plt.axis('off')
             plt.close()
             return fig
+        
 
         mask = np.ones_like(stim_amp_arr, dtype=bool)
         if isinstance(stim_amp, list) and len(stim_amp) > 0:
@@ -372,7 +395,7 @@ def plot_custom_psth(
         jaw_evt = _safe_get_top_level('jaw_dlc_licks')
         if jaw_evt is None:
             fig = plt.figure()
-            plt.text(0.5, 0.5, "Aucun 'jaw_dlc_licks' disponible.", ha='center', va='center')
+            plt.text(0.5, 0.5, "No 'jaw_dlc_licks' available.", ha='center', va='center')
             plt.axis('off')
             plt.close()
             return fig
@@ -387,7 +410,7 @@ def plot_custom_psth(
 
         if t is None or li.size == 0 or len(t) != len(li):
             fig = plt.figure()
-            plt.text(0.5, 0.5, "LickTrace indisponible ou dimensions incohérentes.", ha='center', va='center')
+            plt.text(0.5, 0.5, "No 'lick_timestamps' available or inconsistent dimensions.", ha='center', va='center')
             plt.axis('off')
             plt.close()
             return fig
@@ -414,40 +437,39 @@ def plot_custom_psth(
             events = on_times
     else:
         fig = plt.figure()
-        plt.text(0.5, 0.5, f"Alignement inconnu: {align_event}", ha='center', va='center')
+        plt.text(0.5, 0.5, f"Unknown alignment: {align_event}", ha='center', va='center')
         plt.axis('off')
         plt.close()
         return fig
 
-    # --- Vérifs évènements ---
+    # --- verif events ---
     if events is None or len(events) == 0:
         fig = plt.figure()
-        plt.text(0.5, 0.5, "Aucun évènement sélectionné avec ces filtres.", ha='center', va='center')
+        plt.text(0.5, 0.5, "No events available with these filters.", ha='center', va='center')
         plt.axis('off')
         plt.close()
         return fig
 
-    # --- Calcul PSTH (moyenne population) ---
-    # Reprend la logique de get_psth_sum utilisée ailleurs (si tu l'as importée, tu peux l’appeler directement)
+    # --- calcul psth ---
     bin_edges = np.arange(start=TB[0], stop=TB[1], step=BIN)
     hist_sum = np.zeros(len(bin_edges) - 1, dtype=float)
 
-    # Boucle neurones -> histogramme aligné -> normalisation par nb trials et bin
+
     n_trials = len(events)
     for neuron_spikes in kept_spikes:
         neuron_spikes = np.asarray(neuron_spikes, dtype=float)
-        # Accumule l’histo sur tous les évènements
+
         h = np.zeros(len(bin_edges) - 1, dtype=float)
         for onset in events:
             rel = neuron_spikes - onset
             mask = (rel >= TB[0]) & (rel <= TB[1])
             h += np.histogram(rel[mask], bins=bin_edges)[0]
-        # taux/s (diviser par nb évènements * largeur de bin)
+
         if n_trials > 0:
             h = h / (n_trials * BIN)
         hist_sum += h
 
-    # Moyenne sur neurones
+
     hist_mean = hist_sum / len(kept_spikes)
 
     # --- Plot ---
@@ -455,10 +477,249 @@ def plot_custom_psth(
     ax.plot(bin_edges[:-1], hist_mean, label='PSTH')
     ax.axvline(0.0, linestyle='--', linewidth=1, label='Align', alpha=0.7)
     ax.set_xlim(TB)
-    ax.set_xlabel('Temps (s)')
-    ax.set_ylabel('Taux de décharge (Hz)')
-    title_parts = [f"Session {s}", f"Align: {align_event}", f"Units: {len(kept_spikes)}", f"Events: {len(events)}"]
-    ax.set_title(" | ".join(title_parts))
+    ax.set_xlabel('Time (s)')
+    ax.set_ylabel('Firing rate (Hz)')
+
+    if align_event == "lick_timestamps":
+        title_parts = [
+            f"Session {s} ; Events: {len(events)} ; Units: {len(kept_spikes)}",
+            f"Align  → {align_event}",
+            f"lick_indice   → {', '.join(map(str, use_lick_index))}",
+            f"Brain region  → {', '.join(brain_region)}",
+            f"CCF  → {', '.join(ccf_acronym)}",
+            f"Type  → {', '.join(neuron_type)}"
+        ]
+    elif align_event == "jaw_dlc_licks":
+        title_parts = [
+            f"Session {s} ; Events: {len(events)} ; Units: {len(kept_spikes)}",
+            f"Align  → {align_event}",
+            f"Brain region  → {', '.join(brain_region)}",
+            f"CCF  → {', '.join(ccf_acronym)}",
+            f"Type  → {', '.join(neuron_type)}"
+        ]
+    elif align_event == "trial_onset":
+        title_parts = [
+            f"Session {s} ; Events: {len(events)} ; Units: {len(kept_spikes)}",
+            f"Align  → {align_event} ; Stim Amps: {', '.join(map(str, stim_amp))} ; Results: {', '.join(result)}",
+            f"Brain region  → {', '.join(brain_region)}",
+            f"CCF  → {', '.join(ccf_acronym)}",
+            f"Type  → {', '.join(neuron_type)}"
+        ]
+
+    # Titre principal (en bleu, en haut)
+    fig.suptitle(title_parts[0], fontsize=13, color='blue', fontfamily='monospace')
+    ax.set_title("\n".join(title_parts[1:]), fontsize=9)
+    ax.legend(loc='best')
+    ax.grid(alpha=0.25)
+    plt.tight_layout()
+    plt.close()
+    return fig
+
+
+
+def plot_custom_psth_non_rewarded(
+    data_struct,
+    session_idx,
+    align_event,                 # "PiezoLickOnsets" | "Coils_onset"
+    stim_amp,                    # CheckboxGroup -> liste d'amps sélectionnées
+    rpv_thresh, isi_thresh, iso_thresh,
+    brain_region, ccf_acronym, neuron_type,  # CheckboxGroup (listes)
+    time_bound,                  # (ms_start, ms_end)
+    bin_size                     # (ms)
+):
+    """
+    Computes and returns a Matplotlib figure of a custom PSTH.
+    - time_bound and bin_size are in ms (converted to seconds internally).
+    - All neuron filters are applied.
+    - Alignment options: Coils_onset /  PiezoLickOnsets
+    """
+
+    
+    if (not stim_amp) and align_event == "Coils_onset":
+        fig = plt.figure()
+        plt.text(0.5, 0.5, "Select at least one option for each alignment event.", ha='center', va='center')
+        plt.axis('off')
+        plt.close()
+        return fig
+    
+
+    if len(brain_region) == 0 or len(ccf_acronym) == 0 or len(neuron_type) == 0:
+        fig = plt.figure()
+        plt.text(0.5, 0.5, "Select at least one option for each filter.", ha='center', va='center')
+        plt.axis('off')
+        plt.close()
+        return fig
+    
+
+
+    s = int(session_idx)
+    trials = data_struct['trials'][s]
+
+    # --- Recuperation of trials metadata ---
+    rpv = np.asarray(trials.get('fractionRPVs_estimatedTauR', []), dtype=float)
+    isi = np.asarray(trials.get('isi_violation', []), dtype=float)
+    iso = np.asarray(trials.get('iso_distance', []), dtype=float)
+
+    br  = np.asarray(trials.get('brain_region', []), dtype=object)
+    ccf = np.asarray(trials.get('ccf_names_acronyms', []), dtype=object)
+    typ = np.asarray(trials.get('Type_of_neuron', []), dtype=object)
+
+    spikes_list = np.asarray(trials.get('spikes', []), dtype=object)
+    n_units = len(spikes_list)
+
+    if n_units == 0:
+        fig = plt.figure()
+        plt.text(0.5, 0.5, "No neurons found in this session.", ha='center', va='center')
+        plt.axis('off')
+        plt.close()
+        return fig
+
+    # --- Neuron mask (RPV ≤, ISI ≤, ISO ≥, belonging to checked groups) ---
+    unit_mask = np.ones(n_units, dtype=bool)
+
+    if rpv.size == n_units:
+        unit_mask &= (rpv <= float(rpv_thresh))
+    if isi.size == n_units:
+        unit_mask &= (isi <= float(isi_thresh))
+    if iso.size == n_units:
+        unit_mask &= (iso >= float(iso_thresh))
+
+    if isinstance(brain_region, list) and len(brain_region) > 0 and br.size == n_units:
+        unit_mask &= np.isin(br, brain_region)
+
+    if isinstance(ccf_acronym, list) and len(ccf_acronym) > 0 and ccf.size == n_units:
+        unit_mask &= np.isin(ccf, ccf_acronym)
+
+    if isinstance(neuron_type, list) and len(neuron_type) > 0 and typ.size == n_units:
+        unit_mask &= np.isin(typ, neuron_type)
+
+    # --- Neurons retained ---
+    kept_spikes = spikes_list[unit_mask]
+    if len(kept_spikes) == 0:
+        fig = plt.figure()
+        plt.text(0.5, 0.5, "No neurons retained after filtering.", ha='center', va='center')
+        plt.axis('off')
+        plt.close()
+        return fig
+
+    # --- Selection of alignment events ---
+    # Conversion ms -> s
+    TB = (float(time_bound[0]) / 1000.0, float(time_bound[1]) / 1000.0)
+    BIN = float(bin_size) / 1000.0
+
+    def _safe_get_top_level(key):
+        # data_struct peut être "fusionné" (listes par session) ou session unique
+        if key in data_struct:
+            val = data_struct[key]
+            # si c'est une liste par session
+            if isinstance(val, (list, tuple)) and len(val) > s:
+                return val[s]
+            return val
+        # fallback: parfois stocké dans trials (peu probable)
+        return trials.get(key, None)
+
+    events = None
+
+    if align_event == "Coils_onset":
+        Coils_onset = _safe_get_top_level('trial_onset')
+        if Coils_onset is None:
+            fig = plt.figure()
+            plt.text(0.5, 0.5, "No 'Coils_onset' available.", ha='center', va='center')
+            plt.axis('off')
+            plt.close()
+            return fig
+
+        stim_amp_arr = np.asarray(trials.get('stim_amp', []))
+
+        if stim_amp_arr.size == 0:
+            fig = plt.figure()
+            plt.text(0.5, 0.5, "Trial metadata missing (stim_amp).", ha='center', va='center')
+            plt.axis('off')
+            plt.close()
+            return fig
+        
+
+        mask = np.ones_like(stim_amp_arr, dtype=bool)
+        if isinstance(stim_amp, list) and len(stim_amp) > 0:
+            mask &= np.isin(stim_amp_arr, stim_amp)
+
+        events = np.asarray(Coils_onset)[mask]
+
+    elif align_event == "PiezoLickOnsets":
+        PiezoLickOnsets = _safe_get_top_level('lick_timestamps')
+        if PiezoLickOnsets is None:
+            fig = plt.figure()
+            plt.text(0.5, 0.5, "No 'PiezoLickOnsets' available.", ha='center', va='center')
+            plt.axis('off')
+            plt.close()
+            return fig
+        events = np.asarray(PiezoLickOnsets)
+
+    else:
+        fig = plt.figure()
+        plt.text(0.5, 0.5, f"Unknown alignment: {align_event}", ha='center', va='center')
+        plt.axis('off')
+        plt.close()
+        return fig
+
+    # --- verif events ---
+    if events is None or len(events) == 0:
+        fig = plt.figure()
+        plt.text(0.5, 0.5, "No events available with these filters.", ha='center', va='center')
+        plt.axis('off')
+        plt.close()
+        return fig
+
+    # --- calcul psth ---
+    bin_edges = np.arange(start=TB[0], stop=TB[1], step=BIN)
+    hist_sum = np.zeros(len(bin_edges) - 1, dtype=float)
+
+
+    n_trials = len(events)
+    for neuron_spikes in kept_spikes:
+        neuron_spikes = np.asarray(neuron_spikes, dtype=float)
+
+        h = np.zeros(len(bin_edges) - 1, dtype=float)
+        for onset in events:
+            rel = neuron_spikes - onset
+            mask = (rel >= TB[0]) & (rel <= TB[1])
+            h += np.histogram(rel[mask], bins=bin_edges)[0]
+
+        if n_trials > 0:
+            h = h / (n_trials * BIN)
+        hist_sum += h
+
+
+    hist_mean = hist_sum / len(kept_spikes)
+
+    # --- Plot ---
+    fig, ax = plt.subplots(figsize=(8, 4), dpi=150)
+    ax.plot(bin_edges[:-1], hist_mean, label='PSTH')
+    ax.axvline(0.0, linestyle='--', linewidth=1, label='Align', alpha=0.7)
+    ax.set_xlim(TB)
+    ax.set_xlabel('Time (s)')
+    ax.set_ylabel('Firing rate (Hz)')
+
+    if align_event == "PiezoLickOnsets":
+        title_parts = [
+            f"Session {s} ; Events: {len(events)} ; Units: {len(kept_spikes)}",
+            f"Align  → {align_event}",
+            f"Brain region  → {', '.join(brain_region)}",
+            f"CCF  → {', '.join(ccf_acronym)}",
+            f"Type  → {', '.join(neuron_type)}"
+        ]
+    elif align_event == "Coils_onset":
+        title_parts = [
+            f"Session {s} ; Events: {len(events)} ; Units: {len(kept_spikes)}",
+            f"Align  → {align_event} ; Stim Amps: {', '.join(map(str, stim_amp))}",
+            f"Brain region  → {', '.join(brain_region)}",
+            f"CCF  → {', '.join(ccf_acronym)}",
+            f"Type  → {', '.join(neuron_type)}"
+        ]
+
+    # Titre principal (en bleu, en haut)
+    fig.suptitle(title_parts[0], fontsize=13, color='blue', fontfamily='monospace')
+    ax.set_title("\n".join(title_parts[1:]), fontsize=9)
     ax.legend(loc='best')
     ax.grid(alpha=0.25)
     plt.tight_layout()

@@ -11,6 +11,8 @@ from joblib import Parallel, delayed
 import os.path
 import gdown.download
 import pickle
+import os 
+from pynwb import NWBHDF5IO
 # helper funcs
 
 def normalize_mat_by_row(mat:np.ndarray):
@@ -283,3 +285,149 @@ def cont_calc(estim_timepoints, temp_matcher, neural_activity, BIN_SIZE, TIME_BO
         )
     results = np.array(results)
     return results
+
+
+
+
+# ADD by Loris Fabbro
+
+
+
+def nwb_to_data_struct_rewarded(nwb_path):
+    with NWBHDF5IO(nwb_path, 'r') as io:
+        nwbfile = io.read()  
+        trials_df = nwbfile.trials.to_dataframe()
+        result = list(trials_df["ResponseType"])
+        result = [{'Hit': "hit",'Miss': "miss",'Unlabeled': "non"}.get(x, x) for x in result]
+
+
+        jaw_tms = nwbfile.processing['behavior'].data_interfaces['BehavioralEvents'].time_series["jaw_dlc_licks"].timestamps[:]
+        jaw_data = nwbfile.processing['behavior'].data_interfaces['BehavioralEvents'].time_series["jaw_dlc_licks"].data[:]
+        jaw_dlc_licks_tms = jaw_tms[jaw_data > 0]
+
+
+        data_struct_nwb = {
+            'date' : pd.Timestamp(nwbfile.session_start_time.replace(tzinfo=None)), # data key #OBLIGATOIRE
+            'mouse': nwbfile.subject.description,  # mouse key #OBLIGATOIRE
+            'trial_onset' : nwbfile.processing['behavior'].data_interfaces['BehavioralEvents'].time_series["TrialOnsets"].timestamps[:], #OBLIGATOIRE
+            'lick_timestamps': nwbfile.processing['behavior'].data_interfaces['BehavioralTimeSeries'].time_series["LickTrace"].timestamps[:], #OBLIGATOIRE
+            'jaw_dlc_licks':jaw_dlc_licks_tms,
+            'trial_count' : int(nwbfile.processing['behavior'].data_interfaces['BehavioralEvents'].time_series["TrialOnsets"].timestamps[:].shape[0]), #OBLIGATOIRE
+            'Rewarded' : True,
+            'trials': {
+                'idx': trials_df.index.values, #OBLIGATOIRE
+                'onset': None, #OBLIGATOIRE
+                'stim': np.asarray(trials_df["whisker_stim"], dtype=bool), #OBLIGATOIRE
+                'stim_amp': np.asarray(trials_df["whisker_stim_amplitude"]), #OBLIGATOIRE
+                'result': result, #OBLIGATOIRE
+                # Neurone info-----
+                'spikes': list(nwbfile.units["spike_times"]), #OBLIGATOIRE
+                'brain_region': pd.Series(list(nwbfile.units["Target_area"])), #OBLIGATOIRE
+                'ccf_names_acronyms': list(nwbfile.units["ccf_name (acronym)"]),
+                'Type_of_neuron': list(nwbfile.units["Type of neuron"]),
+                'isi_violation': list(nwbfile.units["isi_violation"]),
+                'iso_distance': list(nwbfile.units["iso_distance"]),
+                'fractionRPVs_estimatedTauR': list(nwbfile.units["fractionRPVs_estimatedTauR"]),
+                #-------------------
+                'reaction_time': nwbfile.processing['behavior'].data_interfaces['BehavioralEvents'].time_series["ReactionTimes"].timestamps[:], #OBLIGATOIRE BUT NOT USED
+                'lick_indices': np.asarray(nwbfile.processing['behavior'].data_interfaces['BehavioralTimeSeries'].time_series["LickTrace"].data[:], dtype=bool), #OBLIGATOIRE
+            },
+        }
+
+    return data_struct_nwb
+
+
+
+def nwb_to_data_struct_non_rewarded(nwb_path):
+    with NWBHDF5IO(nwb_path, 'r') as io:
+        nwbfile = io.read()  
+        #trials_df = nwbfile.trials.to_dataframe()
+
+        #result = list(trials_df["ResponseType"])
+        #result = [{'Hit': "hit",'Miss': "miss",'Unlabeled': "non"}.get(x, x) for x in result]
+
+
+    #    jaw_tms = nwbfile.processing['behavior'].data_interfaces['BehavioralEvents'].time_series["jaw_dlc_licks"].timestamps[:]
+    #    jaw_data = nwbfile.processing['behavior'].data_interfaces['BehavioralEvents'].time_series["jaw_dlc_licks"].data[:]
+    #    jaw_dlc_licks_tms = jaw_tms[jaw_data > 0]
+
+        data_struct_nwb = {
+            'date' : pd.Timestamp(nwbfile.session_start_time.replace(tzinfo=None)), # data key #OBLIGATOIRE
+            'mouse': nwbfile.subject.description,  # mouse key #OBLIGATOIRE
+            'trial_onset' : nwbfile.processing['behavior'].data_interfaces['BehavioralEvents'].time_series["StimFlags"].timestamps[:], #OBLIGATOIRE # It is coil onsets in fact
+            'lick_timestamps': nwbfile.processing['behavior'].data_interfaces['BehavioralEvents'].time_series["PiezoLickOnsets"].timestamps[:], #OBLIGATOIRE
+            'jaw_dlc_licks': None,
+            'trial_count' : int(nwbfile.processing['behavior'].data_interfaces['BehavioralEvents'].time_series["StimFlags"].timestamps[:].shape[0]), #OBLIGATOIRE
+            'Rewarded': False,
+            'trials': {
+                'idx': np.arange(nwbfile.processing['behavior'].data_interfaces['BehavioralEvents'].time_series["StimFlags"].timestamps[:].shape[0]),  # OBLIGATOIRE
+                'onset': None, #OBLIGATOIRE
+                'stim': nwbfile.processing['behavior'].data_interfaces['BehavioralEvents'].time_series["StimFlags"].data[:] > 0, #OBLIGATOIRE
+                'stim_amp': nwbfile.processing['behavior'].data_interfaces['BehavioralEvents'].time_series["StimFlags"].data[:], #OBLIGATOIRE
+                'result': None, #OBLIGATOIRE
+                # Neurone info-----
+                'spikes': list(nwbfile.units["spike_times"]), #OBLIGATOIRE
+                'brain_region': pd.Series(list(nwbfile.units["Target_area"])), #OBLIGATOIRE
+                'ccf_names_acronyms': list(nwbfile.units["ccf_name (acronym)"]), 
+                'Type_of_neuron': list(nwbfile.units["Type of neuron"]),
+                'isi_violation': list(nwbfile.units["isi_violation"]),
+                'iso_distance': list(nwbfile.units["iso_distance"]),
+                'fractionRPVs_estimatedTauR': list(nwbfile.units["fractionRPVs_estimatedTauR"]),
+                #-------------------
+                'reaction_time': None,  #OBLIGATOIRE BUT NOT USED
+                'lick_indices': nwbfile.processing['behavior'].data_interfaces['BehavioralEvents'].time_series["PiezoLickOnsets"].data[:], #np.asarray(nwbfile.processing['behavior'].data_interfaces['BehavioralTimeSeries'].time_series["LickTrace"].data[:], dtype=bool), #OBLIGATOIRE
+            },
+        }
+
+    return data_struct_nwb
+
+
+
+def load_all_sessions_merged(nwb_folder, Rewarded_choice):
+    data_struct = {
+        'date': [],
+        'mouse': [],
+        'trial_onset': [],
+        'lick_timestamps': [],
+        'jaw_dlc_licks': [],
+        'trial_count': [],
+        'Rewarded': [],
+        'trials': []  # Optional: this could be a list of DataFrames
+    }
+
+    for filename in os.listdir(nwb_folder):
+        if filename.endswith(".nwb"):
+            filepath = os.path.join(nwb_folder, filename)
+            with NWBHDF5IO(filepath, 'r') as io:
+                nwbfile = io.read()
+                if "Non Rewarded" in nwbfile.session_description: #Rewarded = false if the mouse did not receive a reward
+                    Rewarded = False
+                else:
+                    Rewarded = True
+
+            if Rewarded_choice != Rewarded:
+                continue
+
+            if Rewarded == False:
+                session_data = nwb_to_data_struct_non_rewarded(filepath)
+            elif Rewarded == True:
+                session_data = nwb_to_data_struct_rewarded(filepath)
+
+            print(f"Loaded: {filepath}")
+            # Append each key's content to the global data_struct
+            data_struct['date'].append(session_data['date'])
+            data_struct['mouse'].append(session_data['mouse'])
+            data_struct['trial_onset'].append(session_data['trial_onset'])
+            data_struct['lick_timestamps'].append(session_data['lick_timestamps'])
+            data_struct['jaw_dlc_licks'].append(session_data['jaw_dlc_licks'])
+            data_struct['trial_count'].append(session_data['trial_count'])
+            data_struct['Rewarded'].append(session_data['Rewarded'])
+            data_struct['trials'].append(session_data['trials'])  # may be a DataFrame or dict
+
+    data_struct['date'] = pd.DatetimeIndex(data_struct['date'])
+    
+    with open("data_struct_nwb.pkl", "wb") as f:
+        pickle.dump(data_struct, f)
+
+    return data_struct
+

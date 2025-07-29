@@ -4,7 +4,7 @@
 DEFAULT_SESSION = 0
 DEFAULT_BIN_SIZE = 10
 DEFAULT_CONF_THRESH = 0.5
-DEFAULT_TIMEBOUND = (0,100)
+DEFAULT_TIMEBOUND = (-50,200)
 DEFAULT_ESTIM_BIN_SIZE = 100
 PARALLEL_RUN = True
 #%%
@@ -12,26 +12,27 @@ import gradio as gr
 from gradio_rangeslider import RangeSlider
 from ..temp_matching.callbacks import *
 from .utils import *
-import pickle
-
-#data_struct = load_data()
 
 
-######## Function ajouter ########
+
+#######################################
+data_struct = load_all_sessions_merged("NWB_files", Rewarded_choice= True)
+#######################################
+
 def S(x):
     try:
         return int(x)
     except Exception:
         return DEFAULT_SESSION
-    
-def _safe_min_max(arr, default=(0.0, 1.0)):
-    if arr is None: return default
-    arr = np.asarray(arr)
-    if arr.size == 0 or not np.isfinite(arr).any():
-        return default
-    return float(np.nanmin(arr)), float(np.nanmax(arr))
+
 
 def update_quality_sliders(session_idx):
+    def _safe_min_max(arr, default=(0.0, 1.0)):
+        if arr is None: return default
+        arr = np.asarray(arr)
+        if arr.size == 0 or not np.isfinite(arr).any():
+            return default
+        return float(np.nanmin(arr)), float(np.nanmax(arr))
     s = S(session_idx)
     trials = data_struct['trials'][s]
     rpv_min, rpv_max = _safe_min_max(trials.get('fractionRPVs_estimatedTauR', []), (0, 1))
@@ -43,23 +44,68 @@ def update_quality_sliders(session_idx):
         gr.update(minimum=iso_min, maximum=iso_max, value=iso_min),
     )
 
-def update_alignment_filters(event, session_idx):
-    s = S(session_idx)
-    trials = data_struct['trials'][s]
+def update_alignment_filters_rewarded(event):
     if event == "lick_timestamps":
-        return gr.update(visible=True), gr.update(visible=False), gr.update(visible=False)
+        return gr.update(visible=True), gr.update(visible=False , value =[])
     elif event == "trial_onset":
-        amps    = sorted(set(map(float, trials['stim_amp'])))
-        results = sorted(set(trials['result']))
         return (
             gr.update(visible=False),
-            gr.update(visible=True, choices=[str(a) for a in amps], value=[str(a) for a in amps]),
-            gr.update(visible=True, choices=results, value=results)
+            gr.update(visible=True),
         )
     else:
-        return gr.update(visible=False), gr.update(visible=False), gr.update(visible=False)
+        return gr.update(visible=False , value =[]), gr.update(visible=False, value =[])
 
-def update_session_filters(session_idx):
+def update_stim_choice(stim_choice, session_idx):
+    """
+    Update the visibility of the stim_amp_filter based on the selected stim_choice.
+    If 'Stimulation' is selected, show the stim_amp_filter; otherwise, hide it.
+    """
+    s = S(session_idx)
+    trials = data_struct['trials'][s]
+
+    if stim_choice == "Stimulation":
+        amps = sorted(set(a for a in map(float, trials['stim_amp']) if a > 0))
+        result = sorted(set(r for r in trials['result'] if r not in ("CR", "FA")))
+        return gr.update(visible=True, choices=[str(a) for a in amps], value=[]), gr.update(visible=True, choices=result, value=[])
+    elif stim_choice == "No-Stimulation":
+        amps = sorted(set(a for a in map(float, trials['stim_amp']) if a <= 0))
+        result = sorted(set(r for r in trials['result'] if r in ("CR", "FA")))
+        return gr.update(visible=True, choices=amps, value=amps), gr.update(visible=True, choices=result, value=[])
+    else:
+        return gr.update(visible=False, value=[]), gr.update(visible=False , value=[])
+
+
+def update_target_area_filter(target_area_filter, session_idx):
+    """
+    Update the visibility of the ccf_acronym_filter and type_of_neuron_filter based on the selected target_area_filter.
+    If 'All' is selected, show both filters; otherwise, hide them.
+    """
+    s = S(session_idx)
+    trials = data_struct['trials'][s]
+    list_brain_region = np.asarray(trials['brain_region'], dtype=str)
+    indices = [i for i, region in enumerate(list_brain_region) if region in target_area_filter]
+
+    ccf_acronyms = sorted(set(np.asarray(trials['ccf_names_acronyms'])[indices]))
+
+    return gr.update(visible=True, choices=ccf_acronyms, value=[])
+
+
+def update_ccf_acronym_filter(ccf_acronym_filter, session_idx):
+    """
+    Update the visibility of the type_of_neuron_filter based on the selected ccf_acronym_filter.
+    If 'All' is selected, show the type_of_neuron_filter; otherwise, hide it.
+    """
+    s = S(session_idx)
+    trials = data_struct['trials'][s]
+    list_ccf_acronyms = np.asarray(trials['ccf_names_acronyms'], dtype=str)
+    indices = [i for i, acronym in enumerate(list_ccf_acronyms) if acronym in ccf_acronym_filter]
+
+    neuron_types = sorted(set(np.asarray(trials['Type_of_neuron'])[indices]))
+
+    return gr.update(visible=True, choices=neuron_types, value=[])
+
+
+def update_session_filters_rewarded(session_idx):
     s = S(session_idx)
     trials = data_struct['trials'][s]
     amps    = sorted(set(map(float, trials['stim_amp'])))
@@ -68,36 +114,29 @@ def update_session_filters(session_idx):
     regions      = sorted(set(trials['brain_region']))
     ccf_acros    = sorted(set(trials['ccf_names_acronyms']))
     return (
-        gr.update(choices=[str(a) for a in amps], value=[str(a) for a in amps]),
-        gr.update(choices=results, value=results),
-        gr.update(choices=neuron_types, value=neuron_types),
-        gr.update(choices=regions, value=regions),
-        gr.update(choices=ccf_acros, value=ccf_acros),
+        gr.update(choices=[str(a) for a in amps], value=[]),
+        gr.update(choices=results, value=[]),
+        gr.update(choices=neuron_types, value=[]),
+        gr.update(choices=regions, value=[]),
+        gr.update(choices=ccf_acros, value=[]),
     )
 
 
-#######################################
-
-#######################################
-
-with open("data_struct_nwb.pkl", "rb") as f:
-    data_struct = pickle.load(f)
-
-#######################################
 
 with gr.Blocks() as app:
-    gr.Markdown("## Template Matching Analysis")
+    with gr.Row():
+        with gr.Column():
+            gr.Markdown("#### Article: *Oryshchuk et al., 2024, Cell Reports*")
+        with gr.Column():
+            gr.File(value="src/static/2024_Oryshchuk_CellReports.pdf", label="Browse Article", file_types=[".pdf"], interactive=False)
 
     gr.Markdown("### ● Session Selection")
     max_session = len(data_struct['date']) - 1
     session_idx = gr.Number(label="Session Index", value=DEFAULT_SESSION, precision=0, interactive=True, minimum=0, maximum=max_session)
     session_label_display = gr.Textbox(label="Session Name", interactive=False,value=f"{data_struct['mouse'][DEFAULT_SESSION]} - {data_struct['date'][DEFAULT_SESSION].strftime('%Y-%m-%d')}")
     session_neurons_count = gr.Textbox(label="Neurons Count", interactive=False,value=update_neurons_count(data_struct,DEFAULT_SESSION))
-    with gr.Row():
-        with gr.Column():
-            gr.Markdown("#### Article: *Oryshchuk et al., 2024, Cell Reports*")
-        with gr.Column():
-            gr.File(value="src/static/2024_Oryshchuk_CellReports.pdf", label="Browse Article", file_types=[".pdf"], interactive=False)
+
+
     gr.Markdown("#### Response Types")
     with gr.Row():
         with gr.Column():
@@ -124,29 +163,30 @@ with gr.Blocks() as app:
                 interactive=True
             )
 
-            # OPTIONS
             lick_filter = gr.CheckboxGroup(label="Lick Indices",choices=[True, False],value=[True], visible=False)
-            amps0    = sorted(set(map(float, data_struct['trials'][DEFAULT_SESSION]['stim_amp'])))
-            results0 = sorted(set(data_struct['trials'][DEFAULT_SESSION]['result']))
+
+
+
+            stim_choice = gr.Dropdown(
+                label="Stimulation or No-Stimulation",
+                choices=["Stimulation", "No-Stimulation"],
+                value= None,
+                visible=False,
+                interactive=True
+            )
 
             stim_amp_filter = gr.CheckboxGroup(
                 label="Stim Amplitudes",
-                choices=[str(a) for a in amps0],
-                value=[str(a) for a in amps0],
+                choices=[],
+                value=[],
                 visible=False
             )
             
             response_type_filter = gr.CheckboxGroup(
                 label="Response Types",
-                choices=results0,
-                value=results0,
+                choices=[],
+                value=[],
                 visible=False
-            )
-
-            psth_align_event.change(
-                update_alignment_filters,
-                inputs=[psth_align_event, session_idx],
-                outputs=[lick_filter, stim_amp_filter, response_type_filter]
             )
 
 
@@ -167,11 +207,15 @@ with gr.Blocks() as app:
             rpv_slider = gr.Slider(minimum=min_rpv, maximum=max_rpv, value=max_rpv, step= rpv_step, label="RPV (%)")
             isi_slider = gr.Slider(minimum=min_isi, maximum=max_isi, value=max_isi, step= isi_step, label="ISI Violation Rate")
             iso_slider = gr.Slider(minimum=min_iso, maximum=max_iso, value=min_iso, step=1, label="Isolation Distance")
-            target_area_filter = gr.CheckboxGroup(label="Brain Region", choices=sorted(list(set(data_struct['trials'][DEFAULT_SESSION]['brain_region']))), interactive=True , value= sorted(list(set(data_struct['trials'][DEFAULT_SESSION]['brain_region']))))
-            ccf_acronym_filter = gr.CheckboxGroup(label="CCF Acronym", choices=sorted(set(data_struct['trials'][DEFAULT_SESSION]['ccf_names_acronyms'])), interactive=True, value= sorted(set(data_struct['trials'][DEFAULT_SESSION]['ccf_names_acronyms'])))
-            type_of_neuron_filter = gr.CheckboxGroup(label="Type of Neuron", choices=sorted(set(data_struct['trials'][DEFAULT_SESSION]['Type_of_neuron'])), interactive=True , value= sorted(set(data_struct['trials'][DEFAULT_SESSION]['Type_of_neuron'])))
 
 
+            target_area_filter = gr.CheckboxGroup(label="Brain Region", choices=sorted(list(set(data_struct['trials'][DEFAULT_SESSION]['brain_region']))), interactive=True , value= [],visible=True)
+            ccf_acronym_filter = gr.CheckboxGroup(label="CCF Acronym", choices=sorted(set(data_struct['trials'][DEFAULT_SESSION]['ccf_names_acronyms'])), interactive=True, value= [],visible = False)
+            type_of_neuron_filter = gr.CheckboxGroup(label="Type of Neuron", choices=sorted(set(data_struct['trials'][DEFAULT_SESSION]['Type_of_neuron'])), interactive=True , value= [],visible = False)
+
+
+
+    # PSTH Custom Plot
     psth_run_button = gr.Button("Plot Custom PSTH")
     psth_output_plot = gr.Plot(label="Custom PSTH")
 
@@ -199,6 +243,8 @@ with gr.Blocks() as app:
         ],
         outputs=[psth_output_plot]
     )
+
+
 
     gr.Markdown("#### ▪ Other analysis parameters")
     with gr.Row():
@@ -241,7 +287,7 @@ with gr.Blocks() as app:
     # MY EVENTS
 
     session_idx.change(
-    update_session_filters,
+    update_session_filters_rewarded,
     inputs=[session_idx],
     outputs=[
         stim_amp_filter,
@@ -255,6 +301,28 @@ with gr.Blocks() as app:
     update_quality_sliders,
     inputs=[session_idx],
     outputs=[rpv_slider, isi_slider, iso_slider]
+    )
+
+    psth_align_event.change(
+    update_alignment_filters_rewarded,
+    inputs=[psth_align_event],
+    outputs=[lick_filter, stim_choice]
+    )
+    stim_choice.change(
+    update_stim_choice,
+    inputs=[stim_choice, session_idx],
+    outputs=[stim_amp_filter, response_type_filter]
+)
+
+    target_area_filter.change(
+        update_target_area_filter,
+        inputs=[target_area_filter, session_idx],
+        outputs=[ccf_acronym_filter]
+    )
+    ccf_acronym_filter.change(
+        update_ccf_acronym_filter,
+        inputs=[ccf_acronym_filter, session_idx],
+        outputs=[type_of_neuron_filter]
     )
 
     # OTHER EVENTS
@@ -292,5 +360,7 @@ with gr.Blocks() as app:
             f1_score_output, download_output
         ]
     )
+
+
 if __name__ == "__main__":
     app.launch()
