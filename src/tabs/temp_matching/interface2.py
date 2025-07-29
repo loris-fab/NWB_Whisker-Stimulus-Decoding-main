@@ -161,6 +161,13 @@ with gr.Blocks() as app:
             type_of_neuron_filter = gr.CheckboxGroup(label="Type of Neuron", choices=sorted(set(data_struct['trials'][DEFAULT_SESSION]['Type_of_neuron'])), interactive=True , value= [],visible = False)
 
 
+    with gr.Row():
+        choice_saved = gr.Dropdown(
+            label="Saved plot?",
+            choices=["Yes", "No"],
+            value="No",
+            interactive=True
+        )
 
     # PSTH Custom Plot
     psth_run_button = gr.Button("Plot Custom PSTH")
@@ -169,14 +176,14 @@ with gr.Blocks() as app:
     def plot_custom_psth_handler(session_idx, align_event, stim_amp,
                                 rpv_thresh, isi_thresh, iso_thresh,
                                 brain_region, ccf_acronym, neuron_type,
-                                time_bound, bin_size):
+                                time_bound, bin_size, choice_saved):
 
         stim_amp_vals = None if not stim_amp else [float(x) for x in stim_amp]
 
         return plot_custom_psth_non_rewarded(
             data_struct, session_idx, align_event,
             stim_amp_vals, rpv_thresh, isi_thresh, iso_thresh,
-            brain_region, ccf_acronym, neuron_type, time_bound, bin_size
+            brain_region, ccf_acronym, neuron_type, time_bound, bin_size, choice_saved
         )
     
     psth_run_button.click(
@@ -186,7 +193,7 @@ with gr.Blocks() as app:
             stim_amp_filter,
             rpv_slider, isi_slider, iso_slider,
             target_area_filter, ccf_acronym_filter, type_of_neuron_filter,
-            time_bound, bin_size
+            time_bound, bin_size, choice_saved
         ],
         outputs=[psth_output_plot]
     )

@@ -260,7 +260,8 @@ def plot_custom_psth(
     rpv_thresh, isi_thresh, iso_thresh,
     brain_region, ccf_acronym, neuron_type,  # CheckboxGroup (listes)
     time_bound,                  # (ms_start, ms_end)
-    bin_size                     # (ms)
+    bin_size,                     # (ms)
+    choice_saved
 ):
     """
     Computes and returns a Matplotlib figure of a custom PSTH.
@@ -513,6 +514,10 @@ def plot_custom_psth(
     ax.grid(alpha=0.25)
     plt.tight_layout()
     plt.close()
+
+    if choice_saved == "Yes":
+        fig.savefig(f"NWB_files/custom_psth_session_{session_idx}.png", dpi=150)
+        
     return fig
 
 
@@ -525,7 +530,8 @@ def plot_custom_psth_non_rewarded(
     rpv_thresh, isi_thresh, iso_thresh,
     brain_region, ccf_acronym, neuron_type,  # CheckboxGroup (listes)
     time_bound,                  # (ms_start, ms_end)
-    bin_size                     # (ms)
+    bin_size,                     # (ms)
+    choice_saved
 ):
     """
     Computes and returns a Matplotlib figure of a custom PSTH.
@@ -724,4 +730,9 @@ def plot_custom_psth_non_rewarded(
     ax.grid(alpha=0.25)
     plt.tight_layout()
     plt.close()
+
+    if choice_saved == "Yes":
+        fig.savefig(f"NWB_files/custom_psth_session_{session_idx}.png", dpi=150)
+        
+
     return fig

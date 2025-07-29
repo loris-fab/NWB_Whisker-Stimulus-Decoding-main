@@ -215,6 +215,14 @@ with gr.Blocks() as app:
 
 
 
+    with gr.Row():
+        choice_saved = gr.Dropdown(
+            label="Saved plot?",
+            choices=["Yes", "No"],
+            value="No",
+            interactive=True
+        )
+
     # PSTH Custom Plot
     psth_run_button = gr.Button("Plot Custom PSTH")
     psth_output_plot = gr.Plot(label="Custom PSTH")
@@ -222,14 +230,14 @@ with gr.Blocks() as app:
     def plot_custom_psth_handler(session_idx, align_event, use_lick_index, stim_amp, result,
                                 rpv_thresh, isi_thresh, iso_thresh,
                                 brain_region, ccf_acronym, neuron_type,
-                                time_bound, bin_size):
+                                time_bound, bin_size, choice_saved):
 
         stim_amp_vals = None if not stim_amp else [float(x) for x in stim_amp]
 
         return plot_custom_psth(
             data_struct, session_idx, align_event, use_lick_index,
             stim_amp_vals, result, rpv_thresh, isi_thresh, iso_thresh,
-            brain_region, ccf_acronym, neuron_type, time_bound, bin_size
+            brain_region, ccf_acronym, neuron_type, time_bound, bin_size, choice_saved
         )
     
     psth_run_button.click(
@@ -239,7 +247,7 @@ with gr.Blocks() as app:
             stim_amp_filter, response_type_filter,
             rpv_slider, isi_slider, iso_slider,
             target_area_filter, ccf_acronym_filter, type_of_neuron_filter,
-            time_bound, bin_size
+            time_bound, bin_size,choice_saved
         ],
         outputs=[psth_output_plot]
     )
