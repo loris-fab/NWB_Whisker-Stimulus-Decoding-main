@@ -16,4 +16,4 @@ with gr.Blocks() as multi_tab_app:
         with gr.TabItem("Matching WR(-)"):
             temp_matching_app2.render()
 
-multi_tab_app.launch(share=True)
+multi_tab_app.launch()
