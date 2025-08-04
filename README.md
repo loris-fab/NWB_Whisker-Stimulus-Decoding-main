@@ -49,6 +49,7 @@ Download NWB files from the **LSENS Laboratory of Sensory Processing**, and put 
 ## 🧩 How to use
 
 ```bash
+conda activate ao-visu-310
 python -m src.app
 ```
 
