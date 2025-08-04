@@ -25,18 +25,22 @@ Oryshchuk et al., *Distributed and specific encoding of sensory, motor, and deci
 
 ## 🚀 Usage
 
-Create environment :
+Create environment and Install dependencies with:
 ```bash
-conda create -n smm python=3.9
-conda activate smm
+conda env create -f environment.yml
 ```
 
-Install dependencies with:
+if it doesn't work try :
 ```bash
-pip install -r requirement.txt
+conda create -n ao-visu-310 python=3.10
+conda activate ao-visu-310
+pip install gradio gradio_rangeslider scipy scikit-learn pymatreader gdown pynwb matplotlib seaborn umap-learn
 ```
+
+
 
 Download NWB files from the **LSENS Laboratory of Sensory Processing**, and put them inside the folder:
+
 
 ```
 ./NWB_files

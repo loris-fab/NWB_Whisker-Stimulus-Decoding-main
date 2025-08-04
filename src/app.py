@@ -1,6 +1,10 @@
 import gradio as gr
 from .tabs.temp_matching.interface import app as temp_matching_app
 from .tabs.temp_matching.interface2 import app as temp_matching_app2
+import warnings
+warnings.filterwarnings("ignore", category=UserWarning)
+
+
 
 
 with gr.Blocks() as multi_tab_app:
@@ -12,4 +16,4 @@ with gr.Blocks() as multi_tab_app:
         with gr.TabItem("Matching WR(-)"):
             temp_matching_app2.render()
 
-multi_tab_app.launch()
+multi_tab_app.launch(share=True)
