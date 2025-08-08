@@ -297,8 +297,12 @@ def nwb_to_data_struct_rewarded(nwb_path):
     with NWBHDF5IO(nwb_path, 'r') as io:
         nwbfile = io.read()  
         trials_df = nwbfile.trials.to_dataframe()
-        result = list(trials_df["ResponseType"])
-        result = [{'Hit': "hit",'Miss': "miss",'Unlabeled': "non"}.get(x, x) for x in result]
+        result = list(trials_df["perf"])
+        mapping = {1:"hit", 0:"miss", 2:"CR", 3:"FA", "Unlabeled":"non"}
+        result = (trials_df["perf"]
+                .replace(mapping)   
+                .fillna("non")      
+                .tolist())
 
 
         jaw_tms = nwbfile.processing['behavior'].data_interfaces['BehavioralEvents'].time_series["jaw_dlc_licks"].timestamps[:]
@@ -310,7 +314,7 @@ def nwb_to_data_struct_rewarded(nwb_path):
             'date' : pd.Timestamp(nwbfile.session_start_time.replace(tzinfo=None)), # data key #OBLIGATOIRE
             'mouse': nwbfile.subject.description,  # mouse key #OBLIGATOIRE
             'trial_onset' : nwbfile.processing['behavior'].data_interfaces['BehavioralEvents'].time_series["TrialOnsets"].timestamps[:], #OBLIGATOIRE
-            'lick_timestamps': nwbfile.processing['behavior'].data_interfaces['BehavioralTimeSeries'].time_series["LickTrace"].timestamps[:], #OBLIGATOIRE
+            'lick_timestamps': nwbfile.processing['behavior'].data_interfaces['BehavioralTimeSeries'].time_series["PiezoLickSignal"].timestamps[:], #OBLIGATOIRE
             'jaw_dlc_licks':jaw_dlc_licks_tms,
             'trial_count' : int(nwbfile.processing['behavior'].data_interfaces['BehavioralEvents'].time_series["TrialOnsets"].timestamps[:].shape[0]), #OBLIGATOIRE
             'Rewarded' : True,
@@ -329,8 +333,8 @@ def nwb_to_data_struct_rewarded(nwb_path):
                 'iso_distance': list(nwbfile.units["iso_distance"]),
                 'fractionRPVs_estimatedTauR': list(nwbfile.units["fractionRPVs_estimatedTauR"]),
                 #-------------------
-                'reaction_time': nwbfile.processing['behavior'].data_interfaces['BehavioralEvents'].time_series["ReactionTimes"].timestamps[:], #OBLIGATOIRE BUT NOT USED
-                'lick_indices': np.asarray(nwbfile.processing['behavior'].data_interfaces['BehavioralTimeSeries'].time_series["LickTrace"].data[:], dtype=bool), #OBLIGATOIRE
+                'reaction_time': nwbfile.processing['behavior'].data_interfaces['BehavioralEvents'].time_series["ResponseType"].timestamps[:], #OBLIGATOIRE BUT NOT USED
+                'lick_indices': np.asarray(nwbfile.processing['behavior'].data_interfaces['BehavioralTimeSeries'].time_series["PiezoLickSignal"].data[:], dtype=bool), #OBLIGATOIRE
             },
         }
 
