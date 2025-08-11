@@ -48,12 +48,21 @@ Download NWB files from the **LSENS Laboratory of Sensory Processing**, and put 
 
 ## 🧩 How to use
 
+
 ```bash
 conda activate ao-visu-310
+python launcher.py
+```
+
+* When prompted, enter the **folder path** (press **Enter** to use the default).
+* The app will start—open the **local URL** shown in the terminal.
+
+**If the folder in `src/share.py` is already correct:**
+
+```bash
 python -m src.app
 ```
 
-Then open the local URL provided in your browser.
 
 ## ✍️ Author
 
