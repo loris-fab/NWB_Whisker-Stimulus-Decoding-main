@@ -23,31 +23,22 @@ Oryshchuk et al., *Distributed and specific encoding of sensory, motor, and deci
 * Continuous perception estimation over time
 
 
-## 🚀 Usage
+## 💻 Work Environment
 
 Create environment and Install dependencies with:
-```bash
-conda env create -f environment.yml
-```
-
-if it doesn't work try :
 ```bash
 conda create -n ao-visu-310 python=3.10
 conda activate ao-visu-310
 pip install gradio gradio_rangeslider scipy scikit-learn pymatreader gdown pynwb matplotlib seaborn umap-learn
 ```
+Download NWB files from the LSENS Laboratory of Sensory Processing server, or copy them locally, and place them inside the designated folder.
 
-
-
-Download NWB files from the **LSENS Laboratory of Sensory Processing**, and put them inside the folder:
-
-
+for exemple : 
 ```
 ./NWB_files
 ```
 
 ## 🧩 How to use
-
 
 ```bash
 conda activate ao-visu-310
@@ -56,13 +47,6 @@ python launcher.py
 
 * When prompted, enter the **folder path** (press **Enter** to use the default).
 * The app will start—open the **local URL** shown in the terminal.
-
-**If the folder in `src/share.py` is already correct:**
-
-```bash
-python -m src.app
-```
-
 
 ## ✍️ Author
 

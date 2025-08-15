@@ -12,11 +12,14 @@ import gradio as gr
 from gradio_rangeslider import RangeSlider
 from ..temp_matching.callbacks import *
 from .utils import *
+from ... import share
 
 
 
 #######################################
-data_struct = load_all_sessions_merged("NWB_files", Rewarded_choice= False)
+
+data_struct = load_all_sessions_merged(share.Folder, Rewarded_choice=False)
+
 #######################################
 
 def S(x):
@@ -101,6 +104,7 @@ def update_session_filters(session_idx):
 
 
 with gr.Blocks() as app:
+
     with gr.Row():
         with gr.Column():
             gr.Markdown("#### Article: *Oryshchuk et al., 2024, Cell Reports*")
