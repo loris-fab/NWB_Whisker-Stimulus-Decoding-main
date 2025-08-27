@@ -2,9 +2,8 @@
 
 # Template Matching GUI – Adapted for NWB Files
 
-**Study:** Oryshchuk et al., 2024, *Cell Reports*
 
-This project is an extension of an EPFL semester project focused on decoding perception of whisker stimuli in mice during an operant conditioning task.
+This project is an extension of an *EPFL semester project* by Sobhan Nili focused on decoding perception of whisker stimuli in mice during an operant conditioning task.
 
 I adapted the original project to support **NWB-formatted data** from the publication *Oryshchuk et al., 2024*, and extended the GUI for more detailed and interactive **PSTH (Peri-Stimulus Time Histogram)** visualization.
 
@@ -45,8 +44,9 @@ conda activate ao-visu-310
 python launcher.py
 ```
 
-* When prompted, enter the **folder path** (press **Enter** to use the default).
-* The app will start—open the **local URL** shown in the terminal.
+* When prompted, enter the *WR+ folder* path and the *WR- folder* path (press Enter to use the saved defaults).
+* Then type the mouse IDs you want to load (separated by spaces) or press Enter to load all mice.
+* The app will start — open the local URL shown in the terminal.
 
 ## ✍️ Author
 
