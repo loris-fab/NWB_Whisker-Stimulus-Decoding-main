@@ -43,7 +43,7 @@ for exemple :
 conda activate ao-visu-310
 python launcher.py
 ```
-
+*Follow instruction in the terminal :*
 * When prompted, enter the *WR+ folder* path and the *WR- folder* path (press Enter to use the saved defaults).
 * Then type the mouse IDs you want to load (separated by spaces) or press Enter to load all mice.
 * The app will start — open the local URL shown in the terminal.

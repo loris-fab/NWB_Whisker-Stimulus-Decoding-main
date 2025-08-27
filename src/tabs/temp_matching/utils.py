@@ -13,6 +13,7 @@ import gdown.download
 import pickle
 import os 
 from pynwb import NWBHDF5IO
+from pathlib import Path
 # helper funcs
 
 def normalize_mat_by_row(mat:np.ndarray):
@@ -401,8 +402,9 @@ def load_all_sessions_merged(nwb_folder, Rewarded_choice):
         'trials': []  # Optional: this could be a list of DataFrames
     }
 
+
     for filename in os.listdir(nwb_folder):
-        if filename.endswith(".nwb"):
+        if filename.endswith(".nwb") :
             filepath = os.path.join(nwb_folder, filename)
             with NWBHDF5IO(filepath, 'r') as io:
                 nwbfile = io.read()

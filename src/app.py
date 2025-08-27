@@ -1,29 +1,35 @@
 import gradio as gr
 import warnings
+import importlib
+import src.share as share  # for MATCHED_FILES_WR_PLUS / WR_MINUS
+
 warnings.filterwarnings("ignore", category=UserWarning)
+importlib.reload(share) 
 
-import src.share as share  # contient MATCHED_FILES_WR_PLUS / WR_MINUS
+temp_matching_app = None
+temp_matching_app2 = None
 
+if share.MATCHED_FILES_WR_PLUS:
+    from .tabs.temp_matching.interface import app as temp_matching_app
+
+if share.MATCHED_FILES_WR_MINUS:
+    from .tabs.temp_matching.interface2 import app as temp_matching_app2
+
+# ---- Construire l'interface
 with gr.Blocks() as multi_tab_app:
     gr.Markdown("# Interface *Oryshchuk et al., 2024, Cell Reports* for WR(-) and WR(+) Trial Template Matching")
 
     with gr.Tabs():
-        # Onglet WR(+)
-        if share.MATCHED_FILES_WR_PLUS:  # seulement si des fichiers sont dispo
-            with gr.TabItem("Matching WR(+)"):
-                from .tabs.temp_matching.interface import app as temp_matching_app
+        with gr.TabItem("Matching WR(+)"):
+            if temp_matching_app:
                 temp_matching_app.render()
-        else:
-            with gr.TabItem("Matching WR(+)"):
+            else:
                 gr.Markdown("⚠️ No WR(+) mice selected.")
 
-        # Onglet WR(-)
-        if share.MATCHED_FILES_WR_MINUS:
-            with gr.TabItem("Matching WR(-)"):
-                from .tabs.temp_matching.interface2 import app as temp_matching_app2
+        with gr.TabItem("Matching WR(-)"):
+            if temp_matching_app2:
                 temp_matching_app2.render()
-        else:
-            with gr.TabItem("Matching WR(-)"):
+            else:
                 gr.Markdown("⚠️ No WR(-) mice selected.")
 
 multi_tab_app.launch(share=True)

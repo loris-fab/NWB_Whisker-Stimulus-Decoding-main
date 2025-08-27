@@ -17,8 +17,8 @@ from ... import share
 
 
 #######################################
-
-data_struct = load_all_sessions_merged(share.Folder, Rewarded_choice=False)
+# Load data
+data_struct = load_all_sessions_merged_Selected_files(SELECTED_FILES=share.MATCHED_FILES_WR_MINUS, Rewarded_choice=False)
 
 #######################################
 
