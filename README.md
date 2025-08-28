@@ -40,7 +40,6 @@ for exemple :
 ## 🧩 How to use
 
 ```bash
-conda activate ao-visu-310
 python launcher.py
 ```
 *Follow instruction in the terminal :*
