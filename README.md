@@ -39,7 +39,7 @@ Once confirmed, you can proceed with the instructions below.
 
 ### 1. Run the launcher
 
-From the project root, execute:
+From the project root, execute in a terminal:
 
 ```bash
 python launcher.py
@@ -49,7 +49,7 @@ python launcher.py
 
 * Enter the **path to the WR(+) folder** (press Enter to reuse the last saved one).
 * Enter the **path to the WR(–) folder** (or press Enter to reuse the last saved one).
-* Optionally type **mouse IDs** (space-separated) to filter specific sessions, or just press Enter to include all.
+* Optionally type **mouse IDs** (space-separated :eg AO039 AO081) to filter specific sessions, or just press Enter to include all.
 
 **"Just to know" What the launcher does:**
 The launcher scans the WR(+) and WR(–) folders to identify valid NWB files, automatically generates the `src/share.py` module containing the resolved paths and file lists, and then starts the multi-tab Gradio application with separate views for WR(+) and WR(–).
