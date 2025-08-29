@@ -33,7 +33,7 @@ pip install gradio gradio_rangeslider scipy scikit-learn pymatreader gdown pynwb
 
 ## 🧩 How to use
 
-Whether you run the pipeline from the **terminal** or from **Jupyter**, it is essential to ensure that you are using the correct environment `ao-visu-310`.  
+It is essential to ensure that you are using the correct environment `ao-visu-310`.  
 If you are working in *Visual Studio Code*, follow the **< Verification >** steps in the [LSENS-Lab-Immersion repository](https://github.com/loris-fab/LSENS-Lab-Immersion.git) to confirm that you are using the right environment either in the terminal when executing the pipeline there, or in Jupyter when running it from notebooks.  
 
 Once confirmed, you can proceed with the instructions below.
