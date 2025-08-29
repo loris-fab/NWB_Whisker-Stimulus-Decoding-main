@@ -72,6 +72,12 @@ If everything has been set up correctly, your interface should now look like thi
 
 ![alt text](Terminal_demo.png)
 
+### 4. Outcome
+Once the app is running, you can select a session using the *Session Index* to view the mouse ID, date, neuron count, and trial outcomes (HIT, MISS, CR, FA). In the **PSTH panel**, configure *alignment events*, *filters* (stimulus amplitude, trial type, brain region, CCF acronym, neuron type, and quality metrics), and adjust time window or bin size. Clicking **Plot Custom PSTH** generates the plot aligned to the chosen event, which can be saved. 
+
+Advanced panels provide further analyses such as template distances, clustering, ROC curves, confusion matrices, and continuous perception estimates.
+
+
 ## ✍️ Author
 
 The original codebase was created by **Sobhan Nili**, and has been adapted for this project by @loris-fab.
