@@ -2,8 +2,13 @@
 *.mat
 *.npz
 *.pkl
-*.pdf
 NWB_files/
 # Jupyter Notebook
 *.ipynb
 Copie analyis.py
+__pycache__
+Other
+.vscode
+.gradio
+*.json
+
