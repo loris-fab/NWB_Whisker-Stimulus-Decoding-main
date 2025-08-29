@@ -39,13 +39,38 @@ for exemple :
 
 ## 🧩 How to use
 
+Whether you run the pipeline from the **terminal** or from **Jupyter**, it is essential to ensure that you are using the correct environment `ao-visu-310`.  
+If you are working in *Visual Studio Code*, follow the **< Verification >** steps in the [LSENS-Lab-Immersion repository](https://github.com/loris-fab/LSENS-Lab-Immersion.git) to confirm that you are using the right environment either in the terminal when executing the pipeline there, or in Jupyter when running it from notebooks.  
+
+Once confirmed, you can proceed with the instructions below.
+
+### 1. Run the launcher
+
+From the project root, execute:
+
 ```bash
 python launcher.py
 ```
-*Follow instruction in the terminal :*
-* When prompted, enter the *WR+ folder* path and the *WR- folder* path (press Enter to use the saved defaults).
-* Then type the mouse IDs you want to load (separated by spaces) or press Enter to load all mice.
-* The app will start — open the local URL shown in the terminal.
+
+### 2. Answer the prompts
+
+* Enter the **path to the WR(+) folder** (press Enter to reuse the last saved one).
+* Enter the **path to the WR(–) folder** (or press Enter to reuse the last saved one).
+* Optionally type **mouse IDs** (space-separated) to filter specific sessions, or just press Enter to include all.
+
+**"Just to know" What the launcher does:**
+The launcher scans the WR(+) and WR(–) folders to identify valid NWB files, automatically generates the `src/share.py` module containing the resolved paths and file lists, and then starts the multi-tab Gradio application with separate views for WR(+) and WR(–).
+
+
+### 3. Access the app
+
+At the end, the **terminal prints a link** (e.g., `http://127.0.0.1:7860`).
+Copy and paste this link into your browser (e.g., Google Chrome) to open the GUI.
+
+
+If everything has been set up correctly, your interface should now look like this. The only remaining step is to repeat the procedure for the different mouse sessions
+
+![alt text](Terminal_demo.png)
 
 ## ✍️ Author
 

@@ -153,7 +153,9 @@ with gr.Blocks() as app:
     time_bound = RangeSlider(label="Time Bound (ms)", minimum=-200, maximum=500, step=1, value=DEFAULT_TIMEBOUND)
     bin_size = gr.Slider(label="Bin Size (ms)", minimum=5, maximum=200, step=10, value=DEFAULT_BIN_SIZE)
     
-        # --- PSTH Custom Interface ---
+    ######################
+    #  psth Interface    #
+    ######################
     gr.Markdown("#### ▪ Custom PSTH parameters")
     with gr.Row():
         with gr.Column():
@@ -225,7 +227,7 @@ with gr.Blocks() as app:
             interactive=True
         )
 
-    # PSTH Custom Plot
+
     psth_run_button = gr.Button("Plot Custom PSTH")
     psth_output_plot = gr.Plot(label="Custom PSTH")
 
@@ -254,7 +256,9 @@ with gr.Blocks() as app:
         outputs=[psth_output_plot]
     )
 
-
+    ######################
+    #   Other analysis   #
+    ######################
 
     gr.Markdown("#### ▪ Other analysis parameters")
     with gr.Row():
@@ -293,8 +297,10 @@ with gr.Blocks() as app:
     f1_score_output = gr.Textbox(label="F1 Score", interactive=False)
     download_output = gr.File(label="Save Continuous Perception",visible=False)
 
-    # Events
-    # MY EVENTS
+    ######################
+    #       EVENT        #
+    ######################
+    # MY EVENTS------------
 
     session_idx.change(
     update_session_filters_rewarded,
@@ -334,7 +340,7 @@ with gr.Blocks() as app:
         inputs=[ccf_acronym_filter, session_idx],
         outputs=[type_of_neuron_filter]
     )
-
+    # ------------------------
     # OTHER EVENTS
     optimize_threshold.change(toggle_confidence_slider, inputs=[optimize_threshold], outputs=[confidence_threshold])
     save_results_indicator.change(lambda save: gr.update(visible=save),inputs=[save_results_indicator],outputs=[download_output])

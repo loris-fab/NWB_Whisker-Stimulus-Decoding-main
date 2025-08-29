@@ -289,15 +289,25 @@ def cont_calc(estim_timepoints, temp_matcher, neural_activity, BIN_SIZE, TIME_BO
 
 
 
+# -_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-
+# -_-_-_-_-_-_-_-_-_-_-_-_-_-_- ADD by Loris Fabbro -_-_-_-_-_-_-_-_-_-_-_-_-_-_-
+# -_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-
 
-# ADD by Loris Fabbro
-
-
+# ==============================
+# NWB parsing functions
+# ==============================
 
 def nwb_to_data_struct_rewarded(nwb_path):
+    """
+    Extract data from a Rewarded NWB file and organize into a dictionary.
+    """
     with NWBHDF5IO(nwb_path, 'r') as io:
         nwbfile = io.read()  
+
+        # DataFrame of trials
         trials_df = nwbfile.trials.to_dataframe()
+
+        # Map performance results to human-readable labels
         result = list(trials_df["perf"])
         mapping = {1:"hit", 0:"miss", 2:"CR", 3:"FA", "Unlabeled":"non"}
         result = (trials_df["perf"]
@@ -305,12 +315,12 @@ def nwb_to_data_struct_rewarded(nwb_path):
                 .fillna("non")      
                 .tolist())
 
-
+        # Extract detected licks from DLC
         jaw_tms = nwbfile.processing['behavior'].data_interfaces['BehavioralEvents'].time_series["jaw_dlc_licks"].timestamps[:]
         jaw_data = nwbfile.processing['behavior'].data_interfaces['BehavioralEvents'].time_series["jaw_dlc_licks"].data[:]
         jaw_dlc_licks_tms = jaw_tms[jaw_data > 0]
 
-
+        # Build data dictionary
         data_struct_nwb = {
             'date' : pd.Timestamp(nwbfile.session_start_time.replace(tzinfo=None)), # data key #OBLIGATOIRE
             'mouse': nwbfile.subject.description,  # mouse key #OBLIGATOIRE
@@ -344,20 +354,19 @@ def nwb_to_data_struct_rewarded(nwb_path):
 
 
 def nwb_to_data_struct_non_rewarded(nwb_path):
+    """
+    Extract data from a Non-Rewarded NWB file and organize into a dictionary.
+    """
     with NWBHDF5IO(nwb_path, 'r') as io:
         nwbfile = io.read()  
+        # DataFrame of trials
         trials_df = nwbfile.trials.to_dataframe()
+
+        # Extract lick information
         lick_time = list(trials_df["lick_time"])
         lick_flag = list(trials_df["lick_flag"])
-        #result = list(trials_df["ResponseType"])
-        #result = [{'Hit': "hit",'Miss': "miss",'Unlabeled': "non"}.get(x, x) for x in result]
 
-
-    #    jaw_tms = nwbfile.processing['behavior'].data_interfaces['BehavioralEvents'].time_series["jaw_dlc_licks"].timestamps[:]
-    #    jaw_data = nwbfile.processing['behavior'].data_interfaces['BehavioralEvents'].time_series["jaw_dlc_licks"].data[:]
-    #    jaw_dlc_licks_tms = jaw_tms[jaw_data > 0]
-
-
+        # Build data dictionary
         data_struct_nwb = {
             'date' : pd.Timestamp(nwbfile.session_start_time.replace(tzinfo=None)), # data key #OBLIGATOIRE
             'mouse': nwbfile.subject.description,  # mouse key #OBLIGATOIRE
@@ -382,66 +391,32 @@ def nwb_to_data_struct_non_rewarded(nwb_path):
                 'fractionRPVs_estimatedTauR': list(nwbfile.units["fractionRPVs_estimatedTauR"]),
                 #-------------------
                 'reaction_time': None,  #OBLIGATOIRE BUT NOT USED
-                'lick_indices': lick_flag, #np.asarray(nwbfile.processing['behavior'].data_interfaces['BehavioralTimeSeries'].time_series["LickTrace"].data[:], dtype=bool), #OBLIGATOIRE
+                'lick_indices': lick_flag, #OBLIGATOIRE
             },
         }
 
     return data_struct_nwb
 
 
-
-def load_all_sessions_merged(nwb_folder, Rewarded_choice):
-    data_struct = {
-        'date': [],
-        'mouse': [],
-        'trial_onset': [],
-        'lick_timestamps': [],
-        'jaw_dlc_licks': [],
-        'trial_count': [],
-        'Rewarded': [],
-        'trials': []  # Optional: this could be a list of DataFrames
-    }
-
-
-    for filename in os.listdir(nwb_folder):
-        if filename.endswith(".nwb") :
-            filepath = os.path.join(nwb_folder, filename)
-            with NWBHDF5IO(filepath, 'r') as io:
-                nwbfile = io.read()
-                if "Non Rewarded" in nwbfile.session_description: #Rewarded = false if the mouse did not receive a reward
-                    Rewarded = False
-                else:
-                    Rewarded = True
-
-            if Rewarded_choice != Rewarded:
-                continue
-
-            if Rewarded == False:
-                session_data = nwb_to_data_struct_non_rewarded(filepath)
-            elif Rewarded == True:
-                session_data = nwb_to_data_struct_rewarded(filepath)
-
-            print(f"Loaded: {filepath}")
-            # Append each key's content to the global data_struct
-            data_struct['date'].append(session_data['date'])
-            data_struct['mouse'].append(session_data['mouse'])
-            data_struct['trial_onset'].append(session_data['trial_onset'])
-            data_struct['lick_timestamps'].append(session_data['lick_timestamps'])
-            data_struct['jaw_dlc_licks'].append(session_data['jaw_dlc_licks'])
-            data_struct['trial_count'].append(session_data['trial_count'])
-            data_struct['Rewarded'].append(session_data['Rewarded'])
-            data_struct['trials'].append(session_data['trials'])  # may be a DataFrame or dict
-
-    data_struct['date'] = pd.DatetimeIndex(data_struct['date'])
-    
-    with open("data_struct_nwb.pkl", "wb") as f:
-        pickle.dump(data_struct, f)
-
-    return data_struct
-
-
+# ============================================================
+# Function to load all sessions from selected files
+# ============================================================
 
 def load_all_sessions_merged_Selected_files(SELECTED_FILES, Rewarded_choice):
+    """
+    Load and merge data from multiple selected NWB files.
+    
+    Args:
+        SELECTED_FILES : list of paths to NWB files (.nwb)
+        Rewarded_choice : bool
+            True  -> only keep Rewarded sessions
+            False -> only keep Non Rewarded sessions
+    
+    Returns:
+        data_struct : dict
+            A dictionary containing all merged session data
+    """
+    # Initialize empty data structure
     data_struct = {
         'date': [],
         'mouse': [],
@@ -450,14 +425,16 @@ def load_all_sessions_merged_Selected_files(SELECTED_FILES, Rewarded_choice):
         'jaw_dlc_licks': [],
         'trial_count': [],
         'Rewarded': [],
-        'trials': []  # Optional: this could be a list of DataFrames
+        'trials': []  # Can contain DataFrames or dicts
     }
-
+    # Loop through all provided files
     for nwb_path in SELECTED_FILES:
         nwb_path = str(nwb_path)
+        # Check file exists and is a valid NWB file
         if not (os.path.isfile(nwb_path) and nwb_path.lower().endswith(".nwb")):
             continue
 
+        # Try reading the NWB file safely
         try:
             with NWBHDF5IO(nwb_path, 'r') as io:
                 nwbfile = io.read()
@@ -471,14 +448,15 @@ def load_all_sessions_merged_Selected_files(SELECTED_FILES, Rewarded_choice):
 
         if Rewarded_choice != Rewarded:
             continue
+        else:
+            # Convert NWB file to structured data
+            if Rewarded == False:
+                session_data = nwb_to_data_struct_non_rewarded(nwb_path)
+            elif Rewarded == True:
+                session_data = nwb_to_data_struct_rewarded(nwb_path)
 
-        if Rewarded == False:
-            session_data = nwb_to_data_struct_non_rewarded(nwb_path)
-        elif Rewarded == True:
-            session_data = nwb_to_data_struct_rewarded(nwb_path)
-
+        # Append session data to global structure
         print(f"Loaded: {nwb_path}")
-        # Append each key's content to the global data_struct
         data_struct['date'].append(session_data['date'])
         data_struct['mouse'].append(session_data['mouse'])
         data_struct['trial_onset'].append(session_data['trial_onset'])
@@ -488,8 +466,10 @@ def load_all_sessions_merged_Selected_files(SELECTED_FILES, Rewarded_choice):
         data_struct['Rewarded'].append(session_data['Rewarded'])
         data_struct['trials'].append(session_data['trials'])  # may be a DataFrame or dict
 
+    # Save results to local pickle file
     data_struct['date'] = pd.DatetimeIndex(data_struct['date'])
-    
+
+    # Save results to local pickle file
     with open("data_struct_nwb.pkl", "wb") as f:
         pickle.dump(data_struct, f)
 

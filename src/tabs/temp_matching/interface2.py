@@ -19,7 +19,6 @@ from ... import share
 #######################################
 # Load data
 data_struct = load_all_sessions_merged_Selected_files(SELECTED_FILES=share.MATCHED_FILES_WR_MINUS, Rewarded_choice=False)
-
 #######################################
 
 def S(x):
@@ -173,7 +172,9 @@ with gr.Blocks() as app:
             interactive=True
         )
 
-    # PSTH Custom Plot
+    ######################
+    #  psth Interface    #
+    ######################
     psth_run_button = gr.Button("Plot Custom PSTH")
     psth_output_plot = gr.Plot(label="Custom PSTH")
 
