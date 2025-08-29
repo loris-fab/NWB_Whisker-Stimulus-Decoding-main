@@ -18,8 +18,7 @@ Oryshchuk et al., *Distributed and specific encoding of sensory, motor, and deci
 * **Support for NWB files**
 * **Interactive GUI via Gradio for Dual analysis tabs: WR(+) and WR(–) trials**
 * PSTH visualization aligned to trial onset, jaw movement... / Custom filters: stimulus amplitudes, neuron types, brain regions, quality metrics (RPV, ISI, ISO)
-* Decoder parameter tuning and behavioral alignment
-* Continuous perception estimation over time
+
 
 
 ## 💻 Work Environment
