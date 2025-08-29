@@ -30,12 +30,6 @@ conda create -n ao-visu-310 python=3.10
 conda activate ao-visu-310
 pip install gradio gradio_rangeslider scipy scikit-learn pymatreader gdown pynwb matplotlib seaborn umap-learn
 ```
-Download NWB files from the LSENS Laboratory of Sensory Processing server, or copy them locally, and place them inside the designated folder.
-
-for exemple : 
-```
-./NWB_files
-```
 
 ## 🧩 How to use
 
